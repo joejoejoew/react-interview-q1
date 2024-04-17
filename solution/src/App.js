@@ -4,10 +4,12 @@ import { getLocations, isNameValid } from './mock-api/apis';
 
 function App() {
   const [name, setName] = useState('');
-  const [nameIsValid, setNameIsValid] = useState(undefined);
+  const [validNameMap, setValidNameMap] = useState(new Map());
   const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState('');
   const [submissions, setSubmissions] = useState([]);
+  
+  let nameIsValid = validNameMap.get(name);
 
   useEffect(() => {
     getLocations().then((resp) => {
@@ -25,14 +27,23 @@ function App() {
               type="text"
               value={name}
               onChange={(e) => {
-                setNameIsValid(undefined);
-                isNameValid(e.target.value).then((resp) => {
-                  setNameIsValid(resp);
+                const value = e.target.value;
+                setName(value);
+                isNameValid(value).then((resp) => {
+                  setValidNameMap(prev => 
+                    new Map(prev.set(value, resp))
+                  );
                 });
-                setName(e.target.value);
               }}
             />
-            <span className="error-message" style={{ visibility: nameIsValid !== false ? 'hidden' : 'visible' }}>this name has already been taken</span>
+            <span
+              className="error-message"
+              style={{
+                visibility: nameIsValid === false ? "visible" : "hidden",
+              }}
+            >
+              this name has already been taken
+            </span>
           </label>
         </div>
         <div>
@@ -62,7 +73,9 @@ function App() {
         </button>
         <button
           type="button"
-          disabled={!nameIsValid || name === "" || selectedLocation === ""}
+          disabled={
+            nameIsValid !== true || name === "" || selectedLocation === ""
+          }
           onClick={() => {
             setSubmissions((prev) => [
               ...prev,
